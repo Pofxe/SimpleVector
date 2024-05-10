@@ -54,6 +54,11 @@ public:
         reserve(obj.get_capacity());
     }
 
+    ~SimpleVector()
+    {
+        items.release();
+    }
+
     // Текущий размер
     size_t get_size() const noexcept
     {
@@ -326,22 +331,20 @@ public:
     // Изменяет значение и содержимое
     void assign(size_t new_size, const Type& value) 
     {
-        if (new_size > capacity) 
+        if (new_size > capacity)
         {
-            ArrayPtr<Type> new_data(new_size);
+            ArrayPtr<Type> newData(new_size);
 
-            std::copy(items.get(), items.get() + size, new_data.get());
-            std::fill(new_data.get() + size, new_data.get() + new_size, value);
+            items.release();
+            items.swap(newData);
 
-            items.swap(new_data);
             capacity = new_size;
         }
-        else
-        {
-            std::fill(items.get(), items.get() + new_size, value);
-        }
+
+        std::fill_n(items.get(), new_size, value);
         size = new_size;
     }
+    
 
     // Вставка в указанное место
     Iterator insert(ConstIterator pos, const Type& value) 
@@ -384,17 +387,18 @@ public:
         }
     }
 
-    // Удаление в заданной позиции
-    Iterator erase(ConstIterator pos) 
+    Iterator erase(ConstIterator pos)
     {
         size_t count = pos - items.get();
-        ArrayPtr<Type> temp(capacity);
+        ArrayPtr<Type> temp(size - 1);
 
         std::copy(items.get(), items.get() + count, temp.get());
         std::copy(items.get() + count + 1, items.get() + size, temp.get() + count);
 
+        items.swap(temp);
         --size;
-        return &items[count];
+
+        return items.get() + count;
     }
 
     // Обмен значений

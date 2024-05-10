@@ -231,21 +231,69 @@ inline void Test2()
         }
     }
 
-    // assing
+    // assign
     {
-        SimpleVector<int> v(5);
-        size_t initial_capacity = v.get_capacity();
-
-        int new_value = 42;
-        size_t new_size = 10;
-        v.assign(new_size, new_value);
-
-        assert(v.get_size() == new_size);
-        assert(v.get_capacity() >= initial_capacity);
-
-        for (size_t i = 0; i < v.get_size(); ++i) 
         {
-            assert(v[i] == new_value);
+            SimpleVector<int> v1{ 1, 2, 3, 4, 5 };
+
+            v1.assign(3, 0);
+
+            assert(v1.get_size() == 3);
+            assert(v1.get_capacity() == 5);
+            assert(v1[0] == 0);
+            assert(v1[1] == 0);
+            assert(v1[2] == 0);
+        }
+
+        {
+            SimpleVector<int> v2{ 1, 2, 3 };
+
+            v2.assign(5, 0);
+
+            assert(v2.get_size() == 5);
+            assert(v2.get_capacity() == 5);
+            assert(v2[0] == 0);
+            assert(v2[1] == 0);
+            assert(v2[2] == 0);
+            assert(v2[3] == 0);
+            assert(v2[4] == 0);
+        }
+
+        {
+            SimpleVector<int> v3{ 1, 2, 3, 4, 5 };
+
+            v3.assign(5, 0);
+
+            assert(v3.get_size() == 5);
+            assert(v3.get_capacity() == 5);
+
+            for (size_t i = 0; i < v3.get_size(); ++i) 
+            {
+                assert(v3[i] == 0);
+            }
+        }
+
+        {
+            SimpleVector<int> v4{ 1, 2, 3, 4, 5 };
+
+            v4.assign(0, 0);
+
+            assert(v4.get_size() == 0);
+            assert(v4.get_capacity() == 5);
+        }
+
+        {
+            SimpleVector<int> v5{ 1, 2, 3 };
+
+            v5.assign(10, 0);
+
+            assert(v5.get_size() == 10);
+            assert(v5.get_capacity() >= 10); 
+
+            for (size_t i = 0; i < v5.get_size(); ++i) 
+            {
+                assert(v5[i] == 0);
+            }
         }
     }
 
