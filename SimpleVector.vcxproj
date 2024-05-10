@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="array_ptr.h" />
+    <ClInclude Include="log.h" />
     <ClInclude Include="simple_vector.h" />
     <ClInclude Include="test.h" />
   </ItemGroup>

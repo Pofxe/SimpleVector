@@ -7,7 +7,7 @@
 
 using namespace std;
 
-inline void Test1() 
+inline void Test1()
 {
     // Конструктор по умолчанию
     {
@@ -60,15 +60,15 @@ inline void Test1()
 
         assert(&v.at(2) == &v[2]);
 
-        try 
+        try
         {
             v.at(3);
             assert(false);
         }
-        catch (const std::out_of_range&) 
+        catch (const std::out_of_range&)
         {
         }
-        catch (...) 
+        catch (...)
         {
             assert(false);
         }
@@ -183,7 +183,7 @@ inline void Test1()
 
 inline void Test2() 
 {
-    // // push_back
+    // push_back
     {
         SimpleVector<int> v(1);
 
@@ -194,6 +194,59 @@ inline void Test2()
 
         assert(v[0] == 0);
         assert(v[1] == 42);
+    }
+
+    // emplace_back
+    {
+        SimpleVector<int> v(1);
+
+        v.emplace_back(42);
+
+        assert(v.get_size() == 2);
+        assert(v.get_capacity() >= v.get_size());
+
+        assert(v[0] == 0);
+        assert(v[1] == 42);
+    }
+
+    // append_range
+    {
+        SimpleVector<int> v(2);
+        v[0] = 10;
+        v[1] = 20;
+
+        int range[] = { 30, 40, 50 };
+        size_t range_size = sizeof(range) / sizeof(range[0]);
+
+        v.append_range(range, range + range_size);
+
+        assert(v.get_size() == 2 + range_size);
+
+        assert(v[0] == 10);
+        assert(v[1] == 20);
+
+        for (size_t i = 0; i < range_size; ++i) 
+        {
+            assert(v[2 + i] == range[i]);
+        }
+    }
+
+    // assing
+    {
+        SimpleVector<int> v(5);
+        size_t initial_capacity = v.get_capacity();
+
+        int new_value = 42;
+        size_t new_size = 10;
+        v.assign(new_size, new_value);
+
+        assert(v.get_size() == new_size);
+        assert(v.get_capacity() >= initial_capacity);
+
+        for (size_t i = 0; i < v.get_size(); ++i) 
+        {
+            assert(v[i] == new_value);
+        }
     }
 
     // Если хватает места, push_back не увеличивает capacity
