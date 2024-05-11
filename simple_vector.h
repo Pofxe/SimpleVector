@@ -7,6 +7,7 @@
 #include <initializer_list>
 #include <stdexcept>
 
+// Вспомагательный класс для работы с методом reserve
 class ReserveProxyObj 
 {
 public:
@@ -31,6 +32,8 @@ public:
     using Iterator = Type*;
     using ConstIterator = const Type*;
 
+//===================================================================== Конструкторы и деструктор ==========================================================
+
     SimpleVector() noexcept = default;
 
     // Создает вектор с элементами по умолчанию
@@ -54,212 +57,41 @@ public:
         reserve(obj.get_capacity());
     }
 
-    ~SimpleVector()
-    {
-        items.release();
-    }
-
-    // Текущий размер
-    size_t get_size() const noexcept
-    {
-        return size;
-    }
-
-    // Максимальный размер
-    size_t max_size() const
-    {
-        size_t max_size_vec = std::numeric_limits<size_t>::max / sizeof(Type);
-        return max_size_vec;
-    }
-
-    // Вместимость
-    size_t get_capacity() const noexcept 
-    {
-        return capacity;
-    }
-
-    // Проверка на пустоту
-    bool is_empty() const noexcept 
-    {
-        return size == 0;
-    }
-
-    // Получение ссылки по индексу
-    Type& operator[](size_t index) noexcept 
-    {
-        return items[index];
-    }
-
-    // Получение константной ссылки по индексу
-    const Type& operator[](size_t index) const noexcept 
-    {
-        return items[index];
-    }
-
-    // Ссылка на первый элемент
-    Type& front()
-    {
-        if (size == 0)
-        {
-            throw std::out_of_range("Vector is empty!");
-        }
-        return items[0];
-    }
-
-    // Константная ссылка на первый элемент
-    const Type& front() const
-    {
-        if (size == 0)
-        {
-            throw std::out_of_range("Vector is empty!");
-        }
-        return items[0];
-    }
-
-    // Ссылка на последний элемент
-    Type& back()
-    {
-        if (size == 0)
-        {
-            throw std::out_of_range("Vector is empty!");
-        }
-        return items[size - 1];
-    }
-
-    // Константная ссылка последний элемент
-    const Type& back() const
-    {
-        if (size == 0)
-        {
-            throw std::out_of_range("Vector is empty!");
-        }
-        return items[size - 1];
-    }
-
-    // Указатель на начало массива
-    Type* data()
-    {
-        return items.get();
-    }
-
-    // Константный указатель на начало массива
-    const Type* data() const
-    {
-        return items.get();
-    }
-
-    // Ссылка на элемент по индексу
-    Type& at(size_t index) 
-    {
-        if (index >= size)
-        {
-            throw std::out_of_range("Out of range");
-        }
-        return items[index];
-    }
-
-    // Константная ссылка на элемент по индексу
-    const Type& at(size_t index) const 
-    {
-        if (index >= size)
-        {
-            throw std::out_of_range("Out of range");
-        }
-        return items[index];
-    }
-
-    // Очистить массив
-    void clear() noexcept 
-    {
-        size = 0;
-    }
-
-    // Изменить размер
-    void resize(size_t new_size) 
-    {
-        if (new_size <= size) 
-        {
-            size = new_size;
-        }
-        if (new_size <= capacity) 
-        {
-            std::fill(items.get() + size, items.get() + size + new_size, Type());
-        }
-        if (new_size > capacity) 
-        {
-            size_t new_capacity = std::max(new_size, capacity * 2);
-            ArrayPtr<Type> temp(new_capacity);
-
-            std::fill(temp.get(), temp.get() + new_capacity, Type());
-            std::copy(items.get(), items.get() + capacity, temp.get());
-
-            items.swap(temp);
-
-            size = new_size;
-            capacity = new_capacity;
-        }
-    }
-
-    // Приравнять вместимость к размеру
-    void shrink_to_fit() 
-    {
-        if (size < capacity) 
-        {
-            ArrayPtr<Type> new_items(size);
-            for (size_t i = 0; i < size; ++i) 
-            {
-                new(&new_items[i])Type(std::move(items[i]));
-                items[i].~Type();
-            }
-            items.swap(new_items);
-            capacity = size;
-        }
-    }
-
-    // Итератор на начало
-    Iterator begin() noexcept
-    {
-        return items.get();
-    }
-
-    // Итератор на конец
-    Iterator end() noexcept 
-    {
-        return items.get() + size;
-    }
-
-    // Константный итератор на начало
-    ConstIterator begin() const noexcept
-    {
-        return items.get();
-    }
-
-    // Константный итератор на конец
-    ConstIterator end() const noexcept 
-    {
-        return items.get() + size;
-    }
-
-    ConstIterator cbegin() const noexcept 
-    {
-        return begin();
-    }
-
-    ConstIterator cend() const noexcept 
-    {
-        return end();
-    }
-
-    // Конструктор копирования
+    // Конструктор копирования O(N)
     SimpleVector(const SimpleVector& other) : items(other.capacity), size(other.size)
     {
         std::copy(other.begin(), other.end(), items.get());
     }
 
-    // Перегруженный оператор присваивания
-    SimpleVector& operator=(const SimpleVector& rhs) 
+    // Конструктор перемещения
+    SimpleVector(SimpleVector&& other) : items(other.capacity)
     {
-        if (&items != &rhs.items) 
+        swap(other);
+    }
+
+    ~SimpleVector()
+    {
+        items.release();
+    }
+
+//================================================================ Операторы ===============================================================================
+ 
+    // Получение ссылки по индексу O(1)
+    Type& operator[](size_t index) noexcept 
+    {
+        return items[index];
+    }
+
+    // Получение константной ссылки по индексу O(1)
+    const Type& operator[](size_t index) const noexcept 
+    {
+        return items[index];
+    }
+
+    // Перегруженный оператор присваивания O(N)
+    SimpleVector& operator=(const SimpleVector& rhs)
+    {
+        if (&items != &rhs.items)
         {
             ArrayPtr<Type> temp(rhs.get_capacity());
 
@@ -272,10 +104,61 @@ public:
         return *this;
     }
 
-    // Добавление в конец
-    void push_back(const Type& item) 
+//===================================================================== Итераторы ==========================================================================
+    // Итератор на начало O(1)
+    Iterator begin() noexcept
     {
-        if (size + 1 > capacity) 
+        return items.get();
+    }
+
+    // Итератор на конец O(1)
+    Iterator end() noexcept
+    {
+        return items.get() + size;
+    }
+
+    // Константный итератор на начало O(1)
+    ConstIterator begin() const noexcept
+    {
+        return items.get();
+    }
+
+    // Константный итератор на конец O(1)
+    ConstIterator end() const noexcept
+    {
+        return items.get() + size;
+    }
+
+    // O(1)
+    ConstIterator cbegin() const noexcept
+    {
+        return begin();
+    }
+
+    // O(1)
+    ConstIterator cend() const noexcept
+    {
+        return end();
+    }
+
+//===================================================================== Методы =============================================================================
+    
+//------------------------------------------------------------- Заполнение и добавление --------------------------------------------------------------------
+    // Заполняет последовательность O(N)
+    void fill(Iterator first, Iterator last)
+    {
+        assert(first < last);
+
+        for (; first != last; ++first)
+        {
+            *first = std::move(Type());
+        }
+    }
+
+    // Добавление в конец с копированием O(N)
+    void push_back(const Type& item)
+    {
+        if (size + 1 > capacity)
         {
             size_t new_capacity = std::max(size + 1, capacity * 2);
             ArrayPtr<Type> temp(new_capacity);
@@ -290,7 +173,24 @@ public:
         ++size;
     }
 
-    // Добавление в конец
+    // Добавление в конец с перемещением O(N)
+    void push_back(Type&& item)
+    {
+        if (size + 1 > capacity)
+        {
+            size_t new_capacity = std::max(size + 1, capacity * 2);
+            ArrayPtr<Type> temp(new_capacity);
+
+            std::move(items.get(), items.get() + size, temp.get());
+            items.swap(temp);
+
+            capacity = new_capacity;
+        }
+        items[size] = std::move(item);
+        ++size;
+    }
+
+    // Добавление в конец O(N)
     void emplace_back(Type&& item)
     {
         if (size + 1 > capacity)
@@ -308,7 +208,7 @@ public:
         ++size;
     }
 
-    // Добавление диапазона в конец
+    // Добавление диапазона в конец O(N)
     template <typename InputIterator>
     void append_range(InputIterator first, InputIterator last)
     {
@@ -328,41 +228,23 @@ public:
         size += range_size;
     }
 
-    // Изменяет значение и содержимое
-    void assign(size_t new_size, const Type& value) 
-    {
-        if (new_size > capacity)
-        {
-            ArrayPtr<Type> newData(new_size);
-
-            items.release();
-            items.swap(newData);
-
-            capacity = new_size;
-        }
-
-        std::fill_n(items.get(), new_size, value);
-        size = new_size;
-    }
-    
-
-    // Вставка в указанное место
-    Iterator insert(ConstIterator pos, const Type& value) 
+    // Вставка в указанное место c копированием O(N)
+    Iterator insert(ConstIterator pos, const Type& value)
     {
         size_t count = pos - items.get();
-        if (capacity == 0) 
+        if (capacity == 0)
         {
             ArrayPtr<Type> temp(1);
             temp[count] = value;
             items.swap(temp);
             ++capacity;
         }
-        else if (size < capacity) 
+        else if (size < capacity)
         {
             std::copy_backward(items.get() + count, items.get() + size, items.get() + size + 1);
             items[count] = value;
         }
-        else 
+        else
         {
             size_t new_capacity = std::max(size + 1, capacity * 2);
             ArrayPtr<Type> temp(capacity);
@@ -378,42 +260,190 @@ public:
         return &items[count];
     }
 
-    // Удаление последнего элемента
-    void pop_back() noexcept 
+    // Вставка в указанное место с перемещением O(N)
+    Iterator insert(Iterator pos, Type&& value)
     {
-        if (items)
+        assert(pos >= begin() && pos <= end());
+
+        size_t count = pos - items.get();
+
+        if (capacity == 0)
         {
-            --size;
+            ArrayPtr<Type> temp(1);
+
+            temp[count] = std::move(value);
+            items.swap(temp);
+            ++capacity;
+        }
+        else if (size < capacity)
+        {
+            std::move_backward(items.get() + count, items.get() + size, items.get() + size + 1);
+            items[count] = std::move(value);
+        }
+        else
+        {
+            size_t new_capacity = std::max(size + 1, capacity * 2);
+            ArrayPtr<Type> temp(capacity);
+
+            std::move(items.get(), items.get() + size, temp.get());
+            std::move_backward(items.get() + count, items.get() + size, temp.get() + size + 1);
+
+            temp[count] = std::move(value);
+            items.swap(temp);
+            capacity = new_capacity;
+        }
+        ++size;
+
+        return &items[count];
+    }
+
+//-------------------------------------------------------------- Полечение значений ------------------------------------------------------------------------
+ 
+     // Текущий размер O(1)
+    size_t get_size() const noexcept
+    {
+        return size;
+    }
+
+    // Максимальный размер O(1)
+    size_t max_size() const
+    {
+        size_t max_size_vec = std::numeric_limits<size_t>::max / sizeof(Type);
+        return max_size_vec;
+    }
+
+    // Вместимость O(1)
+    size_t get_capacity() const noexcept
+    {
+        return capacity;
+    }
+
+    // Проверка на пустоту O(1)
+    bool is_empty() const noexcept
+    {
+        return size == 0;
+    }
+
+    // Ссылка на первый элемент O(1)
+    Type& front()
+    {
+        if (size == 0)
+        {
+            throw std::out_of_range("Vector is empty!");
+        }
+        return items[0];
+    }
+
+    // Константная ссылка на первый элемент O(1)
+    const Type& front() const
+    {
+        if (size == 0)
+        {
+            throw std::out_of_range("Vector is empty!");
+        }
+        return items[0];
+    }
+
+    // Ссылка на последний элемент O(1)
+    Type& back()
+    {
+        if (size == 0)
+        {
+            throw std::out_of_range("Vector is empty!");
+        }
+        return items[size - 1];
+    }
+
+    // Константная ссылка последний элемент O(1)
+    const Type& back() const
+    {
+        if (size == 0)
+        {
+            throw std::out_of_range("Vector is empty!");
+        }
+        return items[size - 1];
+    }
+
+    // Указатель на начало массива O(1)
+    Type* data()
+    {
+        return items.get();
+    }
+
+    // Константный указатель на начало массива O(1)
+    const Type* data() const
+    {
+        return items.get();
+    }
+
+    // Ссылка на элемент по индексу O(1)
+    Type& at(size_t index) 
+    {
+        if (index >= size)
+        {
+            throw std::out_of_range("Out of range");
+        }
+        return items[index];
+    }
+
+    // Константная ссылка на элемент по индексу O(1)
+    const Type& at(size_t index) const 
+    {
+        if (index >= size)
+        {
+            throw std::out_of_range("Out of range");
+        }
+        return items[index];
+    }
+
+//------------------------------------------------------------------- Работа с размером --------------------------------------------------------------------
+
+    // Изменить размер O(N)
+    void resize(size_t new_size) 
+    {
+        if (new_size <= size) 
+        {
+            size = new_size;
+        }
+        if (new_size <= capacity) 
+        {
+            fill(items.get() + size, items.get() + size + new_size);
+        }
+        if (new_size > capacity) 
+        {
+            size_t new_capacity = std::max(new_size, capacity * 2);
+            ArrayPtr<Type> temp(new_capacity);
+
+            fill(temp.get(), temp.get() + new_capacity);
+            std::move(items.get(), items.get() + capacity, temp.get());
+
+            items.swap(temp);
+
+            size = new_size;
+            capacity = new_capacity;
         }
     }
 
-    Iterator erase(ConstIterator pos)
+    // Приравнять вместимость к размеру O(N)
+    void shrink_to_fit() 
     {
-        size_t count = pos - items.get();
-        ArrayPtr<Type> temp(size - 1);
-
-        std::copy(items.get(), items.get() + count, temp.get());
-        std::copy(items.get() + count + 1, items.get() + size, temp.get() + count);
-
-        items.swap(temp);
-        --size;
-
-        return items.get() + count;
+        if (size < capacity) 
+        {
+            ArrayPtr<Type> new_items(size);
+            for (size_t i = 0; i < size; ++i) 
+            {
+                new(&new_items[i])Type(std::move(items[i]));
+                items[i].~Type();
+            }
+            items.swap(new_items);
+            capacity = size;
+        }
     }
 
-    // Обмен значений
-    void swap(SimpleVector& other) noexcept 
-    {
-        std::swap(capacity, other.capacity);
-        std::swap(size, other.size);
-
-        items.swap(other.items);
-    }
-
-    // Резервирование места
+    // Резервирование места O(N)
     void reserve(size_t new_capacity)
     {
-        if (new_capacity > capacity) 
+        if (new_capacity > capacity)
         {
             ArrayPtr<Type> temp(new_capacity);
 
@@ -425,7 +455,62 @@ public:
         }
     }
 
-    // Печать массива
+//------------------------------------------------------------------------ Очистка и удаление --------------------------------------------------------------
+    
+    // Очистить массив O(1)
+    void clear() noexcept
+    {
+        size = 0;
+    }
+
+    // Удаление последнего элемента O(1)
+    void pop_back() noexcept
+    {
+        if (items)
+        {
+            --size;
+        }
+    }
+
+    // Удаление элемента в заданной позиции O(N)
+    Iterator erase(ConstIterator pos)
+    {
+        assert(pos != this->end());
+
+        size_t count = pos - items.get();
+
+        std::move(items.get() + count + 1, items.get() + size, items.get() + count);
+        --size;
+
+        return &items[count];
+    }
+
+//--------------------------------------------------------------------- Прочие методы ----------------------------------------------------------------------
+
+    // Изменяет размер и содержимое O(N)
+    void assign(size_t new_size, const Type& value) 
+    {
+        if (new_size > capacity)
+        {
+            ArrayPtr<Type> newData(new_size);
+            items.swap(newData);
+            capacity = new_size;
+        }
+
+        std::fill_n(items.get(), new_size, value);
+        size = new_size;
+    }
+
+    // Обмен значений O(N)
+    void swap(SimpleVector& other) noexcept 
+    {
+        std::swap(capacity, other.capacity);
+        std::swap(size, other.size);
+
+        items.swap(other.items);
+    }
+
+    // Печать массива O(N)
     void print() const
     {
         for (size_t i = 0; i < size; ++i)
@@ -435,6 +520,8 @@ public:
         std::cout << std::endl;
     }
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 private:
 
     ArrayPtr<Type> items;
@@ -442,6 +529,7 @@ private:
     size_t capacity = 0;
 };
 
+// Фабрика для создания объекта класса с зарезервированным количеством памяти
 ReserveProxyObj reserve(size_t capacity_to_reserve) 
 {
     return ReserveProxyObj(capacity_to_reserve);

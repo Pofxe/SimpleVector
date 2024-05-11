@@ -28,7 +28,7 @@ public:
     // Конструктор хранящий адрус массива в куче
     explicit ArrayPtr(Type* raw_ptr_) noexcept : raw_ptr(raw_ptr_){}
 
-    // Запрет кописрования
+    // Запрет копирования
     ArrayPtr(const ArrayPtr&) = delete;
 
     // Деструктор
@@ -40,27 +40,25 @@ public:
     // Запрет присваивания
     ArrayPtr& operator=(const ArrayPtr&) = delete;
 
-    // Обнуляет указатель на массив
-    [[nodiscard]] Type* release() noexcept
+    // Обнуляет указатель на массив O(1)
+    void release() noexcept
     {
-        Type* tmp = raw_ptr;
         raw_ptr = nullptr;
-        return tmp;
     }
 
-    // Получение ссылки по индексу
+    // Получение ссылки по индексу O(1)
     Type& operator[](size_t index) noexcept 
     {
         return raw_ptr[index];
     }
 
-    // Получение константной ссылки по индексу
+    // Получение константной ссылки по индексу O(1)
     const Type& operator[](size_t index) const noexcept 
     {
         return raw_ptr[index];
     }
 
-    // Проверка на нулевой указатель
+    // Проверка на нулевой указатель O(1)
     explicit operator bool() const 
     {
         if (raw_ptr)
@@ -70,13 +68,13 @@ public:
         return false;
     }
 
-    // Получение одреса массива
+    // Получение одреса массива O(1)
     Type* get() const noexcept 
     {
         return &raw_ptr[0];
     }
 
-    // Обмен значений
+    // Обмен значений O(1)
     void swap(ArrayPtr& other) noexcept 
     {
         std::swap(other.raw_ptr, raw_ptr);

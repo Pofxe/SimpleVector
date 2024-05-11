@@ -4,6 +4,9 @@
 
 #include <cassert>
 #include <iostream>
+#include <utility>
+#include <algorithm>
+#include <numeric>
 
 using namespace std;
 
@@ -414,8 +417,161 @@ inline void Test2()
     }
 }
 
+// Функция заполнения вектора последовательными значениями
+SimpleVector<int> GenerateVector(size_t size) 
+{
+    SimpleVector<int> v(size);
+    iota(v.begin(), v.end(), 1);
+    return v;
+}
+
+// Вспомогательный класс для проверки правильности перемещения
+// Класс запрещает копирование, но позволяет их перемещать
+class X 
+{
+public:
+    X() : X(5) {}
+
+    X(size_t num) : x(num) {}
+
+    X(const X& other) = delete;
+    X& operator=(const X& other) = delete;
+
+    X(X&& other)
+    {
+        x = exchange(other.x, 0);
+    }
+
+    X& operator=(X&& other) 
+    {
+        x = exchange(other.x, 0);
+        return *this;
+    }
+    size_t get_x() const 
+    {
+        return x;
+    }
+
+private:
+    size_t x;
+};
+
+void Test3()
+{
+    // создание
+    {
+        const size_t size = 1000000;
+        SimpleVector<int> moved_vector(GenerateVector(size));
+        assert(moved_vector.get_size() == size);
+    }
+
+    // присваивание
+    {
+        const size_t size = 1000000;
+        SimpleVector<int> moved_vector;
+
+        assert(moved_vector.get_size() == 0);
+
+        moved_vector = GenerateVector(size);
+
+        assert(moved_vector.get_size() == size);
+    }
+
+    // перемещение в конструктор
+    {
+        const size_t size = 1000000;
+        SimpleVector<int> vector_to_move(GenerateVector(size));
+
+        assert(vector_to_move.get_size() == size);
+
+        SimpleVector<int> moved_vector(move(vector_to_move));
+
+        assert(moved_vector.get_size() == size);
+        assert(vector_to_move.get_size() == 0);
+    }
+
+    // перемещение в оператор присваивания
+    {
+        const size_t size = 1000000;
+        SimpleVector<int> vector_to_move(GenerateVector(size));
+
+        assert(vector_to_move.get_size() == size);
+
+        SimpleVector<int> moved_vector = move(vector_to_move);
+
+        assert(moved_vector.get_size() == size);
+        assert(vector_to_move.get_size() == 0);
+    }
+
+    // перемещение с объектом класса Х
+    {
+        const size_t size = 5;
+        SimpleVector<X> vector_to_move;
+
+        for (size_t i = 0; i < size; ++i) 
+        {
+            vector_to_move.push_back(X(i));
+        }
+
+        SimpleVector<X> moved_vector = move(vector_to_move);
+
+        assert(moved_vector.get_size() == size);
+        assert(vector_to_move.get_size() == 0);
+
+        for (size_t i = 0; i < size; ++i) 
+        {
+            assert(moved_vector[i].get_x() == i);
+        }
+    }
+
+    // различные варианты вставок
+    {
+        const size_t size = 5;
+        SimpleVector<X> v;
+
+        for (size_t i = 0; i < size; ++i) 
+        {
+            v.push_back(X(i));
+        }
+
+        // в начало
+        v.insert(v.begin(), X(size + 1));
+
+        assert(v.get_size() == size + 1);
+        assert(v.begin()->get_x() == size + 1);
+
+        // в конец
+        v.insert(v.end(), X(size + 2));
+
+        assert(v.get_size() == size + 2);
+        assert((v.end() - 1)->get_x() == size + 2);
+
+        // в середину
+        v.insert(v.begin() + 3, X(size + 3));
+
+        assert(v.get_size() == size + 3);
+        assert((v.begin() + 3)->get_x() == size + 3);
+    }
+
+    // удаление
+    {
+        const size_t size = 3;
+        SimpleVector<X> v;
+
+        for (size_t i = 0; i < size; ++i) 
+        {
+            v.push_back(X(i));
+        }
+
+        auto it = v.erase(v.begin());
+
+        assert(it->get_x() == 1);
+    }
+}
+
 void TestRun()
 {
     Test1();
     Test2();
+    Test3();
 }
