@@ -69,11 +69,6 @@ public:
         swap(other);
     }
 
-    /*~SimpleVector()
-    {
-       items.release();
-    }*/
-
 //================================================================ Операторы ===============================================================================
  
     // Получение ссылки по индексу O(1)
@@ -382,7 +377,7 @@ public:
         }
         if (new_size <= capacity) 
         {
-            fill(items.get() + size, items.get() + size + new_size);
+            fill(items.get() + size, items.get() + new_size);
         }
         if (new_size > capacity) 
         {
@@ -508,7 +503,7 @@ private:
     // Заполняет последовательность O(N)
     static void fill(Iterator first, Iterator last)
     {
-        assert(first < last);
+        assert(first <= last);
 
         for (; first != last; ++first)
         {
