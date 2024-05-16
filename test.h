@@ -199,19 +199,6 @@ inline void Test2()
         assert(v[1] == 42);
     }
 
-    // emplace_back
-    {
-        SimpleVector<int> v(1);
-
-        v.emplace_back(42);
-
-        assert(v.get_size() == 2);
-        assert(v.get_capacity() >= v.get_size());
-
-        assert(v[0] == 0);
-        assert(v[1] == 42);
-    }
-
     // append_range
     {
         SimpleVector<int> v(2);
@@ -442,7 +429,7 @@ public:
         x = exchange(other.x, 0);
     }
 
-    X& operator=(X&& other) 
+    X& operator=(X&& other)
     {
         x = exchange(other.x, 0);
         return *this;
@@ -574,4 +561,6 @@ void TestRun()
     Test1();
     Test2();
     Test3();
+
+    std::cout << "All tests have been passed"s << endl << endl;
 }

@@ -31,6 +31,12 @@ public:
     // Запрет копирования
     ArrayPtr(const ArrayPtr&) = delete;
 
+    // Конструктор перемещения
+    ArrayPtr(ArrayPtr&& other) noexcept : raw_ptr(other.raw_ptr)
+    {
+        other.raw_ptr = nullptr;
+    }
+
     // Деструктор
     ~ArrayPtr() 
     {
@@ -40,10 +46,25 @@ public:
     // Запрет присваивания
     ArrayPtr& operator=(const ArrayPtr&) = delete;
 
-    // Обнуляет указатель на массив O(1)
-    void release() noexcept
+    // Оператор присваивания перемещением
+    ArrayPtr& operator=(ArrayPtr&& other) noexcept
     {
+        if (this != &other)
+        {
+            delete[] raw_ptr;
+            raw_ptr = other.raw_ptr;
+            other.raw_ptr = nullptr;
+        }
+        return *this;
+    }
+
+    // Прекращает владение массивом и удаляет указатель
+    Type* release() noexcept 
+    {
+        Type* tmp = raw_ptr;
         raw_ptr = nullptr;
+        return tmp;
+        
     }
 
     // Получение ссылки по индексу O(1)
@@ -68,10 +89,10 @@ public:
         return false;
     }
 
-    // Получение одреса массива O(1)
+    // Получение адреса массива O(1)
     Type* get() const noexcept 
     {
-        return &raw_ptr[0];
+        return raw_ptr;
     }
 
     // Обмен значений O(1)

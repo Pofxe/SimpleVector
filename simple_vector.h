@@ -58,13 +58,13 @@ public:
     }
 
     // Конструктор копирования O(N)
-    SimpleVector(const SimpleVector& other) : items(other.capacity), size(other.size)
+    SimpleVector(const SimpleVector& other) : items(new Type[other.size]), size(other.size)
     {
         std::copy(other.begin(), other.end(), items.get());
     }
 
     // Конструктор перемещения
-    SimpleVector(SimpleVector&& other) : items(other.capacity)
+    SimpleVector(SimpleVector&& other) noexcept
     {
         swap(other);
     }
@@ -79,27 +79,27 @@ public:
     // Получение ссылки по индексу O(1)
     Type& operator[](size_t index) noexcept 
     {
+        assert(index <= size);
         return items[index];
     }
 
     // Получение константной ссылки по индексу O(1)
     const Type& operator[](size_t index) const noexcept 
     {
+        assert(index <= size);
         return items[index];
     }
 
     // Перегруженный оператор присваивания O(N)
     SimpleVector& operator=(const SimpleVector& rhs)
     {
-        if (&items != &rhs.items)
+        if (this != &rhs) 
         {
-            ArrayPtr<Type> temp(rhs.get_capacity());
+            SimpleVector temp(rhs);
 
-            std::copy(rhs.begin(), rhs.end(), temp.get());
-
-            items.swap(temp);
-            size = rhs.get_size();
-            capacity = rhs.get_capacity();
+            items.swap(temp.items);
+            std::swap(size, temp.size);
+            std::swap(capacity, temp.capacity);
         }
         return *this;
     }
@@ -144,16 +144,6 @@ public:
 //===================================================================== Методы =============================================================================
     
 //------------------------------------------------------------- Заполнение и добавление --------------------------------------------------------------------
-    // Заполняет последовательность O(N)
-    void fill(Iterator first, Iterator last)
-    {
-        assert(first < last);
-
-        for (; first != last; ++first)
-        {
-            *first = std::move(Type());
-        }
-    }
 
     // Добавление в конец с копированием O(N)
     void push_back(const Type& item)
@@ -163,12 +153,12 @@ public:
             size_t new_capacity = std::max(size + 1, capacity * 2);
             ArrayPtr<Type> temp(new_capacity);
 
-            std::fill(temp.get(), temp.get() + new_capacity, Type());
             std::copy(items.get(), items.get() + size, temp.get());
 
             items.swap(temp);
             capacity = new_capacity;
         }
+
         items[size] = item;
         ++size;
     }
@@ -184,24 +174,6 @@ public:
             std::move(items.get(), items.get() + size, temp.get());
             items.swap(temp);
 
-            capacity = new_capacity;
-        }
-        items[size] = std::move(item);
-        ++size;
-    }
-
-    // Добавление в конец O(N)
-    void emplace_back(Type&& item)
-    {
-        if (size + 1 > capacity)
-        {
-            size_t new_capacity = std::max(size + 1, capacity * 2);
-            ArrayPtr<Type> temp(new_capacity);
-
-            std::fill(temp.get(), temp.get() + new_capacity, Type());
-            std::copy(items.get(), items.get() + size, temp.get());
-
-            items.swap(temp);
             capacity = new_capacity;
         }
         items[size] = std::move(item);
@@ -231,7 +203,10 @@ public:
     // Вставка в указанное место c копированием O(N)
     Iterator insert(ConstIterator pos, const Type& value)
     {
+        assert(pos >= begin() && pos <= end());
+
         size_t count = pos - items.get();
+
         if (capacity == 0)
         {
             ArrayPtr<Type> temp(1);
@@ -427,15 +402,13 @@ public:
     // Приравнять вместимость к размеру O(N)
     void shrink_to_fit() 
     {
-        if (size < capacity) 
+        if (size < capacity)
         {
             ArrayPtr<Type> new_items(size);
-            for (size_t i = 0; i < size; ++i) 
-            {
-                new(&new_items[i])Type(std::move(items[i]));
-                items[i].~Type();
-            }
+
+            std::copy(items.get(), items.get() + size, new_items.get());
             items.swap(new_items);
+
             capacity = size;
         }
     }
@@ -447,7 +420,6 @@ public:
         {
             ArrayPtr<Type> temp(new_capacity);
 
-            std::fill(temp.get(), temp.get() + new_capacity, Type());
             std::copy(items.get(), items.get() + size, temp.get());
 
             items.swap(temp);
@@ -466,18 +438,23 @@ public:
     // Удаление последнего элемента O(1)
     void pop_back() noexcept
     {
-        if (items)
-        {
-            --size;
-        }
+        assert(size > 0);
+
+        --size;
+
     }
 
     // Удаление элемента в заданной позиции O(N)
     Iterator erase(ConstIterator pos)
     {
-        assert(pos != this->end());
+        assert(pos >= begin() && pos <= end());
 
         size_t count = pos - items.get();
+
+        if (count > size)
+        {
+            throw std::out_of_range("Position is out of range");
+        }
 
         std::move(items.get() + count + 1, items.get() + size, items.get() + count);
         --size;
@@ -527,6 +504,17 @@ private:
     ArrayPtr<Type> items;
     size_t size = 0;
     size_t capacity = 0;
+
+    // Заполняет последовательность O(N)
+    static void fill(Iterator first, Iterator last)
+    {
+        assert(first < last);
+
+        for (; first != last; ++first)
+        {
+            *first = Type(); // move
+        }
+    }
 };
 
 // Фабрика для создания объекта класса с зарезервированным количеством памяти
@@ -540,13 +528,15 @@ ReserveProxyObj reserve(size_t capacity_to_reserve)
 template <typename Type>
 inline bool operator==(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs)
 {
-    return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    auto mismatch_result = std::mismatch(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+
+    return mismatch_result.first == lhs.end() && mismatch_result.second == rhs.end();
 }
 
 template <typename Type>
-inline bool operator!=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) 
+inline bool operator!=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs)
 {
-    return !std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    return !(lhs == rhs);
 }
 
 template <typename Type>
@@ -558,7 +548,7 @@ inline bool operator<(const SimpleVector<Type>& lhs, const SimpleVector<Type>& r
 template <typename Type>
 inline bool operator<=(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs) 
 {
-    return (lhs < rhs || lhs == rhs);
+    return !(rhs < lhs);
 }
 
 template <typename Type>
