@@ -69,10 +69,10 @@ public:
         swap(other);
     }
 
-    ~SimpleVector()
+    /*~SimpleVector()
     {
-        items.release();
-    }
+       items.release();
+    }*/
 
 //================================================================ Операторы ===============================================================================
  
@@ -222,7 +222,7 @@ public:
         else
         {
             size_t new_capacity = std::max(size + 1, capacity * 2);
-            ArrayPtr<Type> temp(capacity);
+            ArrayPtr<Type> temp(new_capacity);
 
             std::copy(items.get(), items.get() + size, temp.get());
             std::copy_backward(items.get() + count, items.get() + size, temp.get() + size + 1);
@@ -258,7 +258,7 @@ public:
         else
         {
             size_t new_capacity = std::max(size + 1, capacity * 2);
-            ArrayPtr<Type> temp(capacity);
+            ArrayPtr<Type> temp(new_capacity);
 
             std::move(items.get(), items.get() + size, temp.get());
             std::move_backward(items.get() + count, items.get() + size, temp.get() + size + 1);
