@@ -74,27 +74,24 @@ public:
     // Получение ссылки по индексу O(1)
     Type& operator[](size_t index) noexcept 
     {
-        assert(index <= size);
+        assert(index < size);
         return items[index];
     }
 
     // Получение константной ссылки по индексу O(1)
     const Type& operator[](size_t index) const noexcept 
     {
-        assert(index <= size);
+        assert(index < size);
         return items[index];
     }
 
     // Перегруженный оператор присваивания O(N)
     SimpleVector& operator=(const SimpleVector& rhs)
     {
-        if (this != &rhs) 
+        if (this != &rhs)
         {
             SimpleVector temp(rhs);
-
-            items.swap(temp.items);
-            std::swap(size, temp.size);
-            std::swap(capacity, temp.capacity);
+            swap(temp);
         }
         return *this;
     }
@@ -442,7 +439,7 @@ public:
     // Удаление элемента в заданной позиции O(N)
     Iterator erase(ConstIterator pos)
     {
-        assert(pos >= begin() && pos <= end());
+        assert(pos >= begin() && pos < end());
 
         size_t count = pos - items.get();
 
@@ -523,9 +520,7 @@ ReserveProxyObj reserve(size_t capacity_to_reserve)
 template <typename Type>
 inline bool operator==(const SimpleVector<Type>& lhs, const SimpleVector<Type>& rhs)
 {
-    auto mismatch_result = std::mismatch(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
-
-    return mismatch_result.first == lhs.end() && mismatch_result.second == rhs.end();
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template <typename Type>

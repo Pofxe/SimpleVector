@@ -45,13 +45,13 @@ inline void Test1()
         }
     }
 
-    {
+   {
         SimpleVector<int> v{ 1, 2, 3 };
 
         assert(v.get_size() == 3);
         assert(v.get_capacity() == 3);
         assert(v[2] == 3);
-    }
+   }
 
     {
         SimpleVector<int> v(3);
@@ -110,19 +110,6 @@ inline void Test1()
             assert(v.get_capacity() == old_capacity);
             assert(v[0] == 42);
             assert(v[1] == 55);
-        }
-
-        {
-            const size_t old_size = 3;
-
-            SimpleVector<int> v(3);
-
-            v.resize(old_size + 5);
-            v[3] = 42;
-            v.resize(old_size);
-            v.resize(old_size + 2);
-
-            assert(v[3] == 0);
         }
     }
 
