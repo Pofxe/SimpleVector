@@ -406,7 +406,7 @@ private:
     size_t x;
 };
 
-void Test3()
+inline void Test3()
 {
     {
         const size_t size = 1000000;
