@@ -1,12 +1,13 @@
 #include "test.h"
 #include "log.h"
-#include "detector.h"
 
 int main()
 {
 	MemoryLeakDetector detector;
 
-	LogDuration("Test");
+	{
+		LogDuration("Test");
 
-	TestRun();
+		TestRun();
+	}
 }

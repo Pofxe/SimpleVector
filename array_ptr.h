@@ -1,5 +1,7 @@
 #pragma once
 
+#include "detector.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <algorithm>
@@ -40,7 +42,7 @@ public:
     // Деструктор
     ~ArrayPtr() 
     {
-        delete[] raw_ptr;
+        //delete[] raw_ptr;
     }
 
     // Запрет присваивания

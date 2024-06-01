@@ -1,7 +1,7 @@
 #pragma once
 
 #define _CRTDBG_MAP_ALLOC
-#include<iostream>
+#include <iostream>
 #include <crtdbg.h>
 
 #ifdef _DEBUG
@@ -16,6 +16,7 @@ public:
     {
         // Настройка режима отчета о памяти
         _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+
         // Настройка файла для записи отчетов
         _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
     }
